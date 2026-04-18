@@ -50,19 +50,17 @@
       <button class="action" id="pauseBtn">Pause</button>
       <button class="action" id="resetBtn">Reset</button>
       <button class="action" id="endBtn">End Session</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px">
+  <h3 style="margin:0;font-size:15px;color:#ccc;text-transform:uppercase;letter-spacing:.05em">This Session</h3>
+  <button class="action" id="addProjectBtn">＋ Add Project</button>
+</div>
+<div id="projectsContainer"></div>
     </div>
 
-    <div id="resume" class="tab-content">
-      <h2>Where You Left Off</h2>
-      <div class="card">
-        <textarea id="notes" rows="4" placeholder="What were you working on?"></textarea>
-        <div class="task-row">
-          <input id="taskInput" type="text" placeholder="Add next task" />
-          <button class="action" id="addTaskBtn">Add Task</button>
-        </div>
-      </div>
-      <ul id="taskList"></ul>
-    </div>
+  <div id="resume" class="tab-content">
+  <h2>Where You Left Off</h2>
+  <div id="resumeContent"></div>
+  </div>
 
     <div id="sessionModal" class="modal hidden">
       <div class="modal-box">
