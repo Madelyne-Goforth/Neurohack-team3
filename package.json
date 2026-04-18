@@ -1,0 +1,12 @@
+{
+  "name": "focus-tracker",
+  "version": "0.1.0",
+  "description": "Desktop focus / attention tracker",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^latest"
+  }
+}
