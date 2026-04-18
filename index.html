@@ -9,23 +9,137 @@
         color: white;
         font-family: sans-serif;
         padding: 20px;
+        margin: 0;
       }
-      button {
-        margin-right: 8px;
-        padding: 8px 12px;
+
+      h1, h2 {
+        margin-top: 0;
       }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        padding: 10px 16px;
+        border: none;
+        cursor: pointer;
+        background: #d9d9d9;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .tab.active {
+        background: #4a4a4a;
+        color: white;
+      }
+
+      .tab-content {
+        display: none;
+        padding: 12px 0;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
       #timer {
         font-size: 48px;
-        margin-bottom: 20px;
+        margin: 16px 0;
+      }
+
+      .action {
+        margin-right: 8px;
+        margin-top: 8px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      input, textarea {
+        background: #2a2a2a;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 6px;
+        padding: 8px;
+        font-family: inherit;
+      }
+
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      .card {
+        background: #252525;
+        border: 1px solid #444;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      .task-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .task-row input {
+        flex: 1;
+        min-width: 220px;
       }
     </style>
   </head>
   <body>
     <h1>Focus Tracker</h1>
-    <div id="timer">00:00:00</div>
-    <button id="startBtn">Start</button>
-    <button id="pauseBtn">Pause</button>
-    <button id="resetBtn">Reset</button>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="timerTab">Timer</button>
+      <button class="tab" data-tab="resume">Where You Left Off</button>
+    </div>
+
+    <div id="dashboard" class="tab-content active">
+      <h2>Dashboard</h2>
+      <div class="card">
+        <p id="focusSummary">No sessions yet.</p>
+      </div>
+      <ul id="sessionList"></ul>
+    </div>
+
+    <div id="timerTab" class="tab-content">
+      <h2>Timer</h2>
+      <div id="timer">00:00:00</div>
+      <button class="action" id="startBtn">Start</button>
+      <button class="action" id="pauseBtn">Pause</button>
+      <button class="action" id="resetBtn">Reset</button>
+      <button class="action" id="endBtn">End Session</button>
+    </div>
+
+    <div id="resume" class="tab-content">
+      <h2>Where You Left Off</h2>
+      <div class="card">
+        <textarea id="notes" rows="4" placeholder="What were you working on?"></textarea>
+        <div class="task-row">
+          <input id="taskInput" type="text" placeholder="Add next task" />
+          <button class="action" id="addTaskBtn">Add Task</button>
+        </div>
+      </div>
+      <ul id="taskList"></ul>
+    </div>
 
     <script src="./renderer.js"></script>
   </body>
