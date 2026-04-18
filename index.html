@@ -4,103 +4,26 @@
     <meta charset="UTF-8" />
     <title>Focus Tracker</title>
     <style>
-      body {
-        background: #1e1e1e;
-        color: white;
-        font-family: sans-serif;
-        padding: 20px;
-        margin: 0;
-      }
-
-      h1, h2 {
-        margin-top: 0;
-      }
-
-      .tabs {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }
-
-      .tab {
-        padding: 10px 16px;
-        border: none;
-        cursor: pointer;
-        background: #d9d9d9;
-        border-radius: 8px;
-        font-size: 14px;
-      }
-
-      .tab.active {
-        background: #4a4a4a;
-        color: white;
-      }
-
-      .tab-content {
-        display: none;
-        padding: 12px 0;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-
-      #timer {
-        font-size: 48px;
-        margin: 16px 0;
-      }
-
-      .action {
-        margin-right: 8px;
-        margin-top: 8px;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-
-      input, textarea {
-        background: #2a2a2a;
-        color: white;
-        border: 1px solid #555;
-        border-radius: 6px;
-        padding: 8px;
-        font-family: inherit;
-      }
-
-      textarea {
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      ul {
-        padding-left: 20px;
-      }
-
-      li {
-        margin-bottom: 8px;
-      }
-
-      .card {
-        background: #252525;
-        border: 1px solid #444;
-        border-radius: 10px;
-        padding: 12px;
-        margin-bottom: 12px;
-      }
-
-      .task-row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 10px;
-      }
-
-      .task-row input {
-        flex: 1;
-        min-width: 220px;
-      }
+      body { background: #1e1e1e; color: white; font-family: sans-serif; padding: 20px; margin: 0; }
+      h1, h2 { margin-top: 0; }
+      .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+      .tab { padding: 10px 16px; border: none; cursor: pointer; background: #d9d9d9; border-radius: 8px; font-size: 14px; }
+      .tab.active { background: #4a4a4a; color: white; }
+      .tab-content { display: none; padding: 12px 0; }
+      .tab-content.active { display: block; }
+      #timer { font-size: 48px; margin: 16px 0; }
+      .action { margin-right: 8px; margin-top: 8px; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
+      input, textarea { background: #2a2a2a; color: white; border: 1px solid #555; border-radius: 6px; padding: 8px; font-family: inherit; }
+      textarea { width: 100%; box-sizing: border-box; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 8px; }
+      .card { background: #252525; border: 1px solid #444; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+      .task-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .task-row input { flex: 1; min-width: 220px; }
+      .hidden { display: none !important; }
+      .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+      .modal-box { background: #252525; border: 1px solid #444; border-radius: 12px; padding: 24px; width: min(90vw, 420px); text-align: center; }
+      .modal-image { max-width: 180px; display: block; margin: 12px auto; }
     </style>
   </head>
   <body>
@@ -139,6 +62,45 @@
         </div>
       </div>
       <ul id="taskList"></ul>
+    </div>
+
+    <div id="sessionModal" class="modal hidden">
+      <div class="modal-box">
+        <h2>Nice work!</h2>
+        <img src="fireworks.gif" alt="Fireworks" class="modal-image" />
+        <p id="sessionSummaryText"></p>
+        <button class="action" id="closeSummaryBtn">Continue</button>
+      </div>
+    </div>
+
+    <div id="lockedInSection" class="hidden card">
+      <h2>Were you locked in?</h2>
+      <button class="action" id="lockedInYesBtn">Yes</button>
+      <button class="action" id="lockedInNoBtn">No</button>
+    </div>
+
+    <div id="breakSection" class="hidden card">
+  <h2>Choose your break</h2>
+  <div id="breakTimer">00:00</div>
+  <select id="breakSelect">
+    <option value="5">5 min</option>
+    <option value="10">10 min</option>
+    <option value="15">15 min</option>
+    <option value="20">20 min</option>
+    <option value="25">25 min</option>
+    <option value="30">30 min</option>
+  </select>
+  <button class="action" id="startBreakBtn">Start Break</button>
+  <button class="action" id="endBreakEarlyBtn">End Break Early</button>
+</div>
+
+    <div id="breakDoneSection" class="hidden card">
+      <h2>Break has ended!</h2>
+      <p>Ready to go again?</p>
+      <div class="task-row">
+        <button class="action" id="startSessionAgainBtn">Start Session Again</button>
+        <button class="action" id="startSessionEarlyBtn">Start Early</button>
+      </div>
     </div>
 
     <script src="./renderer.js"></script>

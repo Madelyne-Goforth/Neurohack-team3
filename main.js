@@ -1,6 +1,9 @@
+process.env.ELECTRON_ENABLE_LOGGING = '1';
 const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
 app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-http-cache');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -10,11 +13,14 @@ function createWindow() {
     show: true,
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: false,
+      preload: path.join(__dirname, "preload.js")
     }
   });
 
   win.loadFile("index.html");
+  win.webContents.openDevTools();
+
   win.once("ready-to-show", () => {
     win.show();
     win.focus();
