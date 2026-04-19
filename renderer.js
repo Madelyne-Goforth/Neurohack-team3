@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
  const ids = [
     "timer", "startBtn", "pauseBtn", "resetBtn", "endBtn",
-    "focusSummary", "sessionList", "sessionModal", "sessionSummaryText",
+    "focusSummary", "sessionModal", "sessionSummaryText",
     "closeSummaryBtn", "lockedInSection", "lockedInYesBtn",
     "lockedInNoBtn", "breakSection", "breakSelect", "startBreakBtn",
     "breakTimer", "breakDoneSection", "startSessionAgainBtn", "startSessionEarlyBtn", "endBreakEarlyBtn"
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
  
-  const tabs = document.querySelectorAll(".tab");
+const tabs = document.querySelectorAll(".tab");
 const contents = document.querySelectorAll(".tab-content");
 
 tabs.forEach(tab => {
@@ -23,6 +23,9 @@ tabs.forEach(tab => {
     contents.forEach(c => c.classList.remove("active"));
     tab.classList.add("active");
     document.getElementById(target).classList.add("active");
+    if (target === "dashboard") renderChart(currentRange);
+    if (target === "resume") renderResumeTab();
+    if (target === "log") renderLog();
   });
 });
 
@@ -33,7 +36,6 @@ const resetBtn = document.getElementById("resetBtn");
 const endBtn = document.getElementById("endBtn");
 
 const focusSummary = document.getElementById("focusSummary");
-const sessionList = document.getElementById("sessionList");
 
 const sessionModal = document.getElementById("sessionModal");
 const sessionSummaryText = document.getElementById("sessionSummaryText");
@@ -58,6 +60,9 @@ let breakSeconds = 0;
 let breakInterval = null;
 let selectedBreakMinutes = 5;
 
+let chartInstance = null;
+let currentRange = "week";
+
 let currentProjects = [];
 
 let seconds = 0;
@@ -80,7 +85,6 @@ function renderTimer() {
 }
 
 function renderSessions() {
-  sessionList.innerHTML = "";
 
   if (sessions.length === 0) {
     focusSummary.textContent = "No sessions yet.";
@@ -88,16 +92,25 @@ function renderSessions() {
   }
 
   const total = sessions.reduce((sum, s) => sum + s.minutes, 0);
-  focusSummary.textContent = `Total focus time: ${total} minutes across ${sessions.length} sessions`;
+  const todayStr = new Date().toDateString();
+  const todaySessions = sessions.filter(s => s.date === todayStr);
+  const todayMins = todaySessions.reduce((sum, s) => sum + s.minutes, 0);
+  focusSummary.textContent = `Today: ${todaySessions.length} sessions, ${todayMins} min  ·  All time: ${sessions.length} sessions, ${total} min`;
 
   sessions.slice().reverse().forEach(session => {
     const li = document.createElement("li");
-    li.textContent = `${session.time} — ${session.minutes} min — ${session.note}`;
-    sessionList.appendChild(li);
+    const projNames = session.projects?.length
+  ? session.projects.map(p => p.name).join(", ")
+  : "No projects";
+  li.textContent = `${session.time} — ${session.minutes} min — ${projNames}`;
   });
 
   localStorage.setItem("sessions", JSON.stringify(sessions));
+
+  if (document.getElementById("focusChart")) renderChart(currentRange);
 }
+
+renderChart("week");
 
 startBtn.addEventListener("click", () => {
   if (interval) return;
@@ -136,14 +149,18 @@ endBtn.addEventListener("click", () => {
   clearInterval(interval);
   interval = null;
 
+  const now = new Date();
+
   currentSession = {
-  date:      new Date().toDateString(),
-  dateLabel: new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
-  time:      new Date().toLocaleTimeString(),
-  minutes:   Math.max(1, Math.round(seconds / 60)),
-  projects:  JSON.parse(JSON.stringify(currentProjects)),
-  lockedIn:  null,
-};
+    date: now.toDateString(),
+    dateLabel: now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
+    time: now.toLocaleTimeString(),
+    createdAt: now.getTime(),
+    dayIndex: now.getHours(),
+    minutes: Math.max(1, Math.round(seconds / 60)),
+    projects: JSON.parse(JSON.stringify(currentProjects)),
+    lockedIn: null,
+  };
 
   saveSession(currentSession);
   renderSessions();
@@ -212,8 +229,6 @@ function showBreakOptions() {
 function startBreakFromSelection() {
   selectedBreakMinutes = parseInt(breakSelect.value, 10);
   startBreakTimer(selectedBreakMinutes);
-  // TODO: read selected break minutes from dropdown
-  // TODO: call startBreakTimer(minutes)
 }
 
 function startBreakTimer(minutes) {
@@ -248,8 +263,6 @@ function finishBreakTimer() {
   clearInterval(breakInterval);
   breakInterval = null;
   playBreakSound();
-  // TODO: show break-done image/modal
-  // TODO: show buttons for start session again or start early
 }
 
 function startSessionAgain() {
@@ -293,7 +306,7 @@ function loadSessions() {
 }
 
 function playBreakSound() {
-  const audio = new Audio("break.mp3");
+  const audio = new Audio("507515__elanhickler__archi_scifi_alarm_tracking_01.flac");
   audio.play();
 }
 
@@ -416,7 +429,7 @@ function renderResumeTab() {
 }
 
 function buildSessionCard(session, num) {
-  const lock = session.lockedIn === true ? "🔒 Locked in" : session.lockedIn === false ? "😐 Not locked in" : "";
+  const lock = session.lockedIn === true ? "Locked in" : session.lockedIn === false ? "Not locked in" : "";
   let projHtml = "";
   if (session.projects?.length > 0) {
     session.projects.forEach(proj => {
@@ -454,5 +467,188 @@ document.getElementById("addProjectBtn")?.addEventListener("click", () => {
 document.querySelector('[data-tab="resume"]')?.addEventListener("click", renderResumeTab);
 
 renderProjects();
+
+function renderChart(range) {
+  currentRange = range;
+  const ctx = document.getElementById("focusChart");
+  if (!ctx) return;
+
+  const now = new Date();
+  let labels = [];
+  let data = [];          // total minutes per bar
+  let lockedData   = [];
+  let unlockedData = [];
+
+  if (range === "day") {
+  labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  lockedData = Array(24).fill(0);
+  unlockedData = Array(24).fill(0);
+
+  const todayStr = now.toDateString();
+
+  sessions
+    .filter(s => s.date === todayStr)
+    .forEach(s => {
+      const hour = Number.isInteger(s.dayIndex) ? s.dayIndex : null;
+      if (hour === null || hour < 0 || hour > 23) return;
+
+      if (s.lockedIn === true) {
+        lockedData[hour] += s.minutes;
+      } else {
+        unlockedData[hour] += s.minutes;
+      }
+    });
+
+  } else if (range === "week") {
+    labels = [];
+    data = [];
+    lockedData   = [];
+    unlockedData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }));
+      const dateStr = d.toDateString();
+
+      const mins = sessions
+        .filter(s => s.date === dateStr)
+        .reduce((sum, s) => sum + s.minutes, 0);
+      data.push(mins);
+
+      const locked = sessions
+        .filter(s => s.date === dateStr && s.lockedIn === true)
+        .reduce((sum, s) => sum + s.minutes, 0);
+      const unlocked = mins - locked;
+
+      lockedData.push(locked);
+      unlockedData.push(unlocked);
+    }
+
+  } else if (range === "month") {
+    labels = [];
+    data = [];
+    lockedData   = [];
+    unlockedData = [];
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+      const dateStr = d.toDateString();
+
+      const mins = sessions
+        .filter(s => s.date === dateStr)
+        .reduce((sum, s) => sum + s.minutes, 0);
+      data.push(mins);
+
+      const locked = sessions
+        .filter(s => s.date === dateStr && s.lockedIn === true)
+        .reduce((sum, s) => sum + s.minutes, 0);
+      const unlocked = mins - locked;
+
+      lockedData.push(locked);
+      unlockedData.push(unlocked);
+    }
+  }
+
+  // Destroy old chart if exists
+  if (chartInstance) chartInstance.destroy();
+
+  // Create new stacked bar chart
+  chartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Locked in",
+          data: lockedData,
+          backgroundColor: "rgba(0, 120, 255, 0.8)",
+          stack: "sessions",
+        },
+        {
+          label: "Not locked in",
+          data: unlockedData,
+          backgroundColor: "rgba(120, 120, 120, 0.5)",
+          stack: "sessions",
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: "#fff",
+            font: { size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const value = ctx.parsed.y;
+              const isLocked = ctx.dataset.label === "Locked in";
+              return `${value} min (${isLocked ? "locked‑in" : "not locked‑in"})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: "#888", font: { size: 11 }, maxRotation: 45 },
+          grid: { color: "#2a2a2a" }
+        },
+        y: {
+          stacked: true,
+          ticks: { color: "#888", font: { size: 11 } },
+          grid: { color: "#2a2a2a" },
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "minutes",
+            color: "#666",
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  });
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderChart(btn.dataset.range);
+  });
+});
+
+function renderLog() {
+  const logList = document.getElementById("logList");
+  const logSummary = document.getElementById("logSummary");
+  if (!logList) return;
+  logList.innerHTML = "";
+
+  if (sessions.length === 0) {
+    logSummary.textContent = "No sessions yet.";
+    return;
+  }
+
+  const total = sessions.reduce((sum, s) => sum + s.minutes, 0);
+  logSummary.textContent = `${sessions.length} sessions · ${total} min total`;
+
+  sessions.slice().reverse().forEach(s => {
+    const li = document.createElement("li");
+    const projNames = s.projects?.length
+      ? s.projects.map(p => p.name).join(", ")
+      : "No projects";
+    const lock = s.lockedIn ? "Locked in" : "Not locked in";
+    li.innerHTML = `<strong>${s.dateLabel || s.date}</strong> · ${s.time} · ${s.minutes} min ${lock} · ${projNames}`;
+    logList.appendChild(li);
+  });
+}
 
 });
