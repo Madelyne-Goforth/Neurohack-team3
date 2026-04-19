@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Tracker</title>
+
+<style>
+body {
+    width: 360px;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #111;
+    color: #f7f7f7;
+}
+
+h1 {
+    margin-bottom: 12px;
+}
+
+button {
+    padding: 10px 18px;
+    margin: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    border: 2px solid #444;
+    border-radius: 5px;
+}
+
+#startBtn { background: #28a745; color: white; }
+#stopBtn { background: #dc3545; color: white; }
+
+#timer {
+    font-size: 28px;
+    margin: 18px 0;
+    color: #f39c12;
+    font-weight: bold;
+}
+
+#status {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #58d68d;
+}
+
+#idleWarning {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #7d6608;
+    color: white;
+    display: none;
+}
+
+#idleWarning button {
+    margin-top: 12px;
+    background: #f1c40f;
+    color: black;
+}
+
+#staleWarning {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #c0392b;
+    color: white;
+    display: none;
+}
+
+#staleWarning button {
+    margin-top: 12px;
+    background: #f1c40f;
+    color: black;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Focus Tracker</h1>
+
+<div id="timer">00:00:00</div>
+
+<div>
+    <button id="start_Btn">Start</button>
+    <button id="stop_Btn">Stop</button>
+</div>
+
+<div id="idleWarning">
+    <div><strong>Are you still there?</strong></div>
+    <div>Focus Tracker: You've been idle for 15 seconds.</div>
+    <div>
+        <button id="ackBtn">I'm still here</button>
+    </div>
+</div>
+
+<div id="staleWarning">
+    <div><strong>Focus Tracker: Inactive tab detected!</strong></div>
+    <div>Focus Tracker: A tab has been idle for 30 seconds. What would you like to do?</div>
+    <div>
+        <button id="closeTabBtn">Close Tab</button>
+        <button id="keepTabBtn">Keep Tab Open</button>
+    </div>
+</div>
+
+<div id="status"></div>
+
+<!-- IMPORTANT: defer ensures DOM exists before popup.js runs -->
+<script src="popup.js" defer></script>
+
+</body>
+</html>
